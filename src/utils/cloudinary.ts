@@ -45,4 +45,20 @@ const uploadOnCloudinary = async (
   }
 };
 
+export const deleteFromCloudinary = async (url: string) => {
+  if (!url) return;
+
+  try {
+    const publicId = url
+      .split("/")
+      .slice(-2)
+      .join("/")
+      .split(".")[0];
+
+    await cloudinary.uploader.destroy(publicId);
+  } catch (error) {
+    console.error("Cloudinary delete failed:", error);
+  }
+};
+
 export { uploadOnCloudinary };

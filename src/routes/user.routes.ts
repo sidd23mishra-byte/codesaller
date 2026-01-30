@@ -4,41 +4,85 @@ import {
   loginUser,
   logoutUser,
   getCurrentUser,
+  updateProfile,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+  deleteAccount,
   isVerifiedUser,
-  verifyEmailOTP
+  verifyEmailOTP,
 } from "../controllers/user.controller";
 
+import { validateAuth, authorizeRoles } from "../middlewares/auth.middleware";
 import { imageUpload } from "../middlewares/multer.middleware";
-import { validateAuth, AdminVerify } from "../middlewares/auth.middleware";
 
 const router = Router();
 
 /* =======================
-   Auth Routes
+   Public Routes
 ======================= */
 
+// Register user (profile image optional)
 router.post(
   "/register",
-  imageUpload.fields([{ name: "profileImage", maxCount: 1 }]),
+  imageUpload.single("profileImage"),
   registerUser
 );
 
+// Login
 router.post("/login", loginUser);
-router.post("/logout", validateAuth, logoutUser);
-router.get("/me", validateAuth, getCurrentUser);
 
-// Email verification
-router.post("/verify-email/:userId", isVerifiedUser); // send OTP
-router.post("/verify-email-otp/:userId", verifyEmailOTP); // verify OTP
+// Send email verification OTP
+router.post("/verify-email/:userId", isVerifiedUser);
+
+// Verify email OTP
+router.post("/verify-email/:userId/otp", verifyEmailOTP);
+
+// Forgot password
+router.post("/forgot-password", forgotPassword);
+
+// Reset password
+router.post("/reset-password", resetPassword);
+
 
 /* =======================
-   Admin Route Example
+   Protected Routes
 ======================= */
-router.get("/admin", validateAuth, AdminVerify, (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Welcome Admin",
-  });
-});
+
+// Get current user
+router.get(
+  "/me",
+  validateAuth,
+  getCurrentUser
+);
+
+// Logout
+router.post(
+  "/logout",
+  validateAuth,
+  logoutUser
+);
+
+// Update profile (name + image)
+router.put(
+  "/profile",
+  validateAuth,
+  imageUpload.single("profileImage"),
+  updateProfile
+);
+
+// Change password
+router.put(
+  "/change-password",
+  validateAuth,
+  changePassword
+);
+
+// Delete account
+router.delete(
+  "/delete-account",
+  validateAuth,
+  deleteAccount
+);
 
 export default router;

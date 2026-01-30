@@ -11,14 +11,39 @@ export interface IUser extends Document {
     name: string;
     email: string;
     password: string;
+    profileImage?: string;
     role: "USER" | "SELLER" | "ADMIN";
     isVerified: boolean;
+
     refreshToken?: string;
+
+    purchaseHistory: {
+        templateId: mongoose.Types.ObjectId;
+        purchasedAt: Date;
+        price: number;
+    }[];
+
+    cart: {
+        templateId: mongoose.Types.ObjectId;
+        addedAt: Date;
+    }[];
+
+    wishlist: {
+        templateId: mongoose.Types.ObjectId;
+        addedAt: Date;
+    }[];
+
+    emailOTP?: string;
+    emailOTPExpires?: Date;
+
+    resetPasswordOTP?: string;
+    resetPasswordOTPExpires?: Date;
 
     comparePassword(password: string): Promise<boolean>;
     generateAccessToken(): string;
     generateRefreshToken(): string;
 }
+
 
 /* =======================
    Schema
@@ -31,35 +56,70 @@ const userSchema: Schema<IUser> = new Schema(
             required: true,
             trim: true,
         },
-
         email: {
             type: String,
             required: true,
             unique: true,
             lowercase: true,
-            index: true,
+            trim: true,
         },
-
         password: {
             type: String,
             required: true,
+            minlength: 6,
             select: false,
         },
-
         role: {
             type: String,
             enum: ["USER", "SELLER", "ADMIN"],
             default: "USER",
         },
-
+        profileImage: {
+            type: String, // URL of profile image
+            default: "",
+        },
         isVerified: {
             type: Boolean,
-            default: false,
+            default: false, // email verification
+        },
+        purchaseHistory: [
+            {
+                templateId: { type: mongoose.Schema.Types.ObjectId, ref: "Template" },
+                purchasedAt: { type: Date, default: Date.now },
+                price: Number,
+            }
+        ],
+        cart: [
+            {
+                templateId: { type: mongoose.Schema.Types.ObjectId, ref: "Template" },
+                addedAt: { type: Date, default: Date.now },
+            }
+        ],
+        wishlist: [
+            {
+                templateId: { type: mongoose.Schema.Types.ObjectId, ref: "Template" },
+                addedAt: { type: Date, default: Date.now },
+            }
+        ],
+        emailOTP: {
+            type: String,  // 6-digit OTP
+            select: false,
+        },
+        emailOTPExpires: {
+            type: Date,
         },
 
+        resetPasswordOTP: {
+            type: String,
+            select: false,
+        },
+        resetPasswordOTPExpires: {
+            type: Date
+        },
         refreshToken: {
             type: String,
         },
+
     },
     { timestamps: true }
 );

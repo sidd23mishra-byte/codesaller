@@ -16,20 +16,28 @@ cloudinary.config({
    Upload Helper
 ======================= */
 
+type UploadType = "image" | "raw" | "auto";
+
+interface UploadOptions {
+  folder?: string;
+  resourceType?: UploadType;
+}
+
 const uploadOnCloudinary = async (
-  localFilePath?: string
+  localFilePath?: string,
+  options: UploadOptions = {}
 ): Promise<UploadApiResponse | null> => {
   try {
     if (!localFilePath) return null;
 
     const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: "auto",
+      resource_type: options.resourceType || "auto",
+      folder: options.folder,
     });
 
     fs.unlinkSync(localFilePath);
     return response;
   } catch (error) {
-    // ensure temp file is removed even on error
     if (localFilePath && fs.existsSync(localFilePath)) {
       fs.unlinkSync(localFilePath);
     }

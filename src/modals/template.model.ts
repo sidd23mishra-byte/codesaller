@@ -11,7 +11,11 @@ export interface ITemplate extends Document {
   description: string;
 
   /* Pricing */
-  price: number;
+  price: {
+    personal: number;
+    commercial: number;
+  };
+
   discountPrice?: number;
   isFree: boolean;
 
@@ -95,10 +99,16 @@ const templateSchema = new Schema<ITemplate>(
 
     /* Pricing */
     price: {
-      type: Number,
-      default: 0,
-      min: 0,
+      personal: {
+        type: Number,
+        required: true,
+      },
+      commercial: {
+        type: Number,
+        required: true,
+      },
     },
+
 
     discountPrice: {
       type: Number,

@@ -1,0 +1,12 @@
+export const PAYMENT_STATUS = {
+  CREATED: "CREATED",
+  SUCCESS: "SUCCESS",
+  FAILED: "FAILED",
+  REFUNDED: "REFUNDED",
+} as const;
+
+export const PAYMENT_GATEWAYS = {
+  RAZORPAY: "RAZORPAY",
+  STRIPE: "STRIPE",
+  PAYPAL: "PAYPAL",
+} as const;

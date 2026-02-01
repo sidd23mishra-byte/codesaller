@@ -1,13 +1,38 @@
-import mongoose, { Schema, Document, model } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
 export interface IOrder extends Document {
   user: mongoose.Types.ObjectId;
+  seller: mongoose.Types.ObjectId;
   template: mongoose.Types.ObjectId;
+
+  templateSnapshot: {
+    title: string;
+    slug: string;
+    version: string;
+  };
+
   price: number;
-  paymentStatus: "PENDING" | "SUCCESS" | "FAILED";
+  currency: string;
+
+  platformFee: number;
+  sellerEarning: number;
+
+  licenseType: "personal" | "commercial";
+
+  paymentStatus: "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED";
+  orderStatus: "CREATED" | "COMPLETED" | "CANCELLED" | "REFUNDED";
+
   paymentMethod?: string;
   transactionId?: string;
-  licenseType?: "personal" | "commercial";
+
+  payment?: mongoose.Types.ObjectId; // ✅ Link to Payment
+
+  refund?: {
+    isRefunded: boolean;
+    refundedAt?: Date;
+    refundTransactionId?: string;
+  };
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,23 +40,59 @@ export interface IOrder extends Document {
 const orderSchema = new Schema<IOrder>(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    seller: { type: Schema.Types.ObjectId, ref: "User", required: true },
     template: { type: Schema.Types.ObjectId, ref: "Template", required: true },
-    price: { type: Number, required: true },
-    paymentStatus: {
-      type: String,
-      enum: ["PENDING", "SUCCESS", "FAILED"],
-      default: "PENDING",
+
+    templateSnapshot: {
+      title: { type: String, required: true },
+      slug: { type: String, required: true },
+      version: { type: String, required: true },
     },
-    paymentMethod: { type: String }, // e.g., "Stripe", "PayPal"
-    transactionId: { type: String }, // e.g., from Stripe or PayPal
+
+    price: { type: Number, required: true },
+    currency: { type: String, default: "INR" },
+
+    platformFee: { type: Number, default: 0 },
+    sellerEarning: { type: Number, default: 0 },
+
     licenseType: {
       type: String,
       enum: ["personal", "commercial"],
-      default: "personal",
+      required: true,
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["PENDING", "SUCCESS", "FAILED", "REFUNDED"],
+      default: "PENDING",
+      index: true,
+    },
+
+    orderStatus: {
+      type: String,
+      enum: ["CREATED", "COMPLETED", "CANCELLED", "REFUNDED"],
+      default: "CREATED",
+      index: true,
+    },
+
+    paymentMethod: String,
+    transactionId: String,
+
+    payment: {
+      type: Schema.Types.ObjectId,
+      ref: "Payment", // ✅ Link to Payment model
+    },
+
+    refund: {
+      isRefunded: { type: Boolean, default: false },
+      refundedAt: Date,
+      refundTransactionId: String,
     },
   },
   { timestamps: true }
 );
 
-const Order = model<IOrder>("Order", orderSchema);
-export default Order;
+// 🔥 Index for faster queries on user + status
+orderSchema.index({ user: 1, paymentStatus: 1, orderStatus: 1 });
+
+export default mongoose.model<IOrder>("Order", orderSchema);
